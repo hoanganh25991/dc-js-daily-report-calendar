@@ -196,11 +196,11 @@ function callCal() {
         function onClick(d, i) {
             let dateClicked = simpleDate(d);
             console.log('fuck you');
-            // _chart.group().all().forEach(function (datum) {
-            //     if (datum.key === dateClicked) {
-            //         _chart.onClick(datum, i);
-            //     }
-            // });
+            _chart.group().all().forEach(function (datum) {
+                if (datum.key === dateClicked) {
+                    _chart.onClick(datum, i);
+                }
+            });
 
         }
 
