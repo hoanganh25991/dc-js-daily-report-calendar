@@ -79,7 +79,8 @@ class TxCalendarChart {
 	}
 }
 
-fetch('data.json')
+// fetch('data.json')
+fetch('data1.json')
 	.then(res =>{
 		return Promise.resolve(res.json());
 	})
