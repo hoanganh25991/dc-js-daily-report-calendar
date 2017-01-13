@@ -10,7 +10,7 @@ class TxCalendarChart {
 		/**
 		 * Init calendarChart as plugin chart into dc
 		 */
-		callCal();
+		// callCal();
 
 		this.rawData = rawData;
 		this._cleanData();
