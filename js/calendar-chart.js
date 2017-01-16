@@ -74,86 +74,90 @@ class tx {
 		/**
 		 * Clear before re-render
 		 */
-		d3.select('#' + this.anchorName())
-		  .selectAll('svg')
-		  .remove();
+		let xSVG =
+			d3.select('#' + this.anchorName())
+			  .selectAll('svg')
+			  .data(this.range)
+			  .enter()
+			  .append('svg')
+			  .style('padding', '3px');
+		let svg =
+			xSVG
+				.attr('width', width)
+				.attr('height', this._height)
+				.append('g')
+				.attr('transform', 'translate(' + this.margins().left + ',' + this.margins().top + ')');
 
-		let coreLayoutSvg = d3.select('#' + this.anchorName())
-		                      .selectAll('svg')
-		                      .data(this.range)
-		                      .enter()
-		                      .append('svg')
-		                      .style('padding', '3px');
-
-		let titleSvg = coreLayoutSvg.attr('width', width + this.margins().left + (this._cellHeight * 3))
-		                            .attr('height', this._height)
-		                            .append('g')
-		                            .attr('transform',
-			                            'translate(' + this.margins().left + ',' + this.margins().top + ')')
-		                            .append('text')
-		                            .attr('transform', 'translate(-16,' + this._cellHeight * 3.5 + ')rotate(-90)')
-		                            .style('text-anchor', 'middle')
-		                            .text(function(d){
-			                            return d;
-		                            });
+		svg.append('text')
+		   .attr('transform', 'translate(-16,' + this._cellHeight * 3.5 + ')rotate(-90)')
+		   .style('text-anchor', 'middle')
+		   .text(function(d){
+			   return d;
+		   });
 
 
 		if(this.renderTitle()){
-			let dowLabel = titleSvg.selectAll('.dowLabel')
-			                       .data(function(d){
-				                       return ['M', 'W', 'F'];
-			                       })
-			                       .enter().append('text')
-			                       .attr('transform', function(d){
-				                       return 'translate(-15,' + parseInt((this._cellHeight * weekDay[d]) - 3) + ')';
-			                       })
-			                       .text(function(d){
-				                       return d;
-			                       })
-			                       .attr('style', 'font-weight : bold');
+			let dowLabel =
+				svg.selectAll('.dowLabel')
+				   .data(function(d){
+					   return ['M', 'W', 'F'];
+				   })
+				   .enter().append('text')
+				   .attr('transform', function(d){
+
+					   return 'translate(-15,' + parseInt((cellWidth * weekDay[d]) - 3) + ')';
+				   })
+				   .text(function(d){
+					   return d;
+				   })
+				   .attr('style', 'font-weight : bold');
 		}
 
-		let rect = coreLayoutSvg.selectAll('.day')
-		                        .data(function(d){
-			                        return d3.time.days(new Date(d, 0, 1), new Date(d + 1, 0, 1));
-		                        })
-		                        .enter()
-		                        .append('rect')
-		                        .attr('class', 'day')
-		                        .attr('width', cellWidth)
-		                        .attr('height', this._cellHeight)
-		                        .attr('x', function(d){
-			                        return week(d) * cellWidth;
-		                        })
-		                        .attr('y', function(d){
-			                        return day(d) * cellWidth;
-		                        })
-		                        .style('fill', d =>{
-			                        return 'white';
-		                        })
+		let rect =
+				svg.selectAll('.day')
+				   .data(function(d){
+					   return d3.time.days(new Date(d, 0, 1), new Date(d + 1, 0, 1));
+				   })
+				   .enter()
+				   .append('rect')
+				   .attr('class', 'day')
+				   .attr('width', cellWidth)
+				   .attr('height', this._cellHeight)
+				   .attr('x', function(d){
+					   return week(d) * cellWidth;
+				   })
+				   .attr('y', function(d){
+					   return day(d) * cellWidth;
+				   })
+				   .style('fill', d =>{
+					   return 'white';
+				   })
 			;
 
 		if(this.renderTitle()){
-			rect.append('title')
-			    .text(function(d){
-				    return d;
-			    });
+			rect
+				.append('title')
+				.text(function(d){
+					return d;
+				});
 		}
 
 		let monthLabel =
-			titleSvg.selectAll('.monthLabel')
-			        .data(function(d){
-				        return d3.time.months(new Date(d, 0, 1), new Date(d + 1, 0, 1));
-			        })
-			        .enter().append('text')
-			        .text(function(d){
-				        return fullMonth(d);
-			        })
-			        .attr('x', function(d){
-				        return week(d) * cellWidth /*+ cellSize*/;
-			        })
-			        .attr('y', -3)
-			        .attr('class', 'monthLabel');
+			svg.selectAll('.monthLabel')
+			   .data(function(d){
+				   return d3.time.months(new Date(d, 0, 1), new Date(d + 1, 0, 1));
+			   })
+			   .enter().append('text')
+			   .text(function(d){
+				   return fullMonth(d);
+			   })
+			   .attr('x', function(d){
+				   return week(d) * cellWidth /*+ cellSize*/;
+			   })
+			   .attr('y', -3)
+			   .attr('class', 'monthLabel');
+
+		let chart = this;
 
 		let data =
 			d3.nest()
@@ -161,9 +165,9 @@ class tx {
 				  return d.key;
 			  })
 			  .rollup(function(d){
-				  return this.valueAccessor()(d);
+				  return chart.valueAccessor()(d);
 			  })
-			  .map(this.data());
+			  .map(chart.data());
 
 		let valArr = this.group().all().map(c =>{
 			return c.value
@@ -217,7 +221,7 @@ class tx {
 		    })
 		    .on('click', onClick);
 
-		if(coreLayoutSvg.renderTitle()){
+		if(this.renderTitle()){
 			rect.filter(function(d){
 				let date = simpleDate(d);
 				return data[date];
@@ -229,6 +233,30 @@ class tx {
 			    });
 		}
 
+
+		function onClick(d, i){
+			let dateClicked = simpleDate(d);
+			console.log('fuck you');
+			this.group().all().forEach(function(datum){
+				if(datum.key === dateClicked){
+					this.onClick(datum, i);
+				}
+			});
+
+		}
+
+		function prefixZero(value){
+			let s = value + '';
+			if(s.length === 1){
+				return '0' + value;
+			}else{
+				return value;
+			}
+		}
+
+		function simpleDate(date){
+			return date.getFullYear() + '-' + prefixZero(date.getMonth() + 1) + '-' + prefixZero(date.getDate());
+		}
 		// _chart.width = function(){
 		// 	console.log('hello width function');
 		// };
@@ -249,19 +277,6 @@ class tx {
 	_checkRequirement(){
 		if(!this.range)
 			console.error('No range years set up');
-	}
-
-	xxx(w){
-		let cellSize = Math.floor(w / 53);
-		rect.attr('width', cellSize);
-		rect.attr('x', function(d){
-			return week(d) * cellSize;
-		});
-		coreLayoutSvg.attr('width', w);
-		monthLabel.attr('x', function(d){
-			return week(d) * cellSize;
-		});
-		// window.xSVG = xSVG;
 	}
 
 	rangeYears(range){

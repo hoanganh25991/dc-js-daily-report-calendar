@@ -101,9 +101,11 @@ fetch('data1.json')
 		});
 
 		let countAttr = dayDim.group().reduceSum(d => {
-			return d[attr];
+			return d['total'];
 		});
-		x.dimension(dayDim)
+		x
+			.width(948)
+			.dimension(dayDim)
 			.group(countAttr)
          .valueAccessor(c =>{
 	         return c[0].value;
