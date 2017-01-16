@@ -38,6 +38,7 @@ class tx {
 
 	reDrawAttr(){
 
+
 	}
 
 	reDrawWidth(width){
@@ -54,6 +55,10 @@ class tx {
 	}
 
 	_doRender(){
+		d3.select('#' + this.anchorName())
+		  .selectAll('svg')
+		  .remove();
+
 		let width = this.width();
 		/**
 		 * Check width requirement

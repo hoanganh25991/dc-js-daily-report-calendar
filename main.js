@@ -101,7 +101,7 @@ fetch('data1.json')
 		});
 
 		let countAttr = dayDim.group().reduceSum(d => {
-			return d['total'];
+			return d['pax'];
 		});
 		x
 			.width(948)
@@ -113,5 +113,6 @@ fetch('data1.json')
          .rangeYears([2016, 2018]);
 		x.render();
 		window.x = x;
+		window.dayDim = dayDim;
 	})
 ;
