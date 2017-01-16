@@ -89,5 +89,6 @@ fetch('data1.json')
 		
 		let dailyReportCalendar = new TxCalendarChart(closures, 'daily-report-calendar');
 		dailyReportCalendar.render('total');
+		window.dailyReportCalendar = dailyReportCalendar;
 	})
 ;
