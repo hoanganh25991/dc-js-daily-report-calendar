@@ -90,5 +90,26 @@ fetch('data1.json')
 		let dailyReportCalendar = new TxCalendarChart(closures, 'daily-report-calendar');
 		dailyReportCalendar.render('total');
 		window.dailyReportCalendar = dailyReportCalendar;
+		
+		let x = new tx();
+		x.anchor('#testAnchor');
+
+		let ndx = crossfilter(dailyReportCalendar.rawData);
+
+		let dayDim = ndx.dimension(d => {
+			return d.calendarDayFormat;
+		});
+
+		let countAttr = dayDim.group().reduceSum(d => {
+			return d[attr];
+		});
+		x.dimension(dayDim)
+			.group(countAttr)
+         .valueAccessor(c =>{
+	         return c[0].value;
+         })
+         .rangeYears([2016, 2018]);
+		x.render();
+		
 	})
 ;

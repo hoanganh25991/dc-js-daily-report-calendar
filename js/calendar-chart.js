@@ -12,6 +12,19 @@ class tx {
 		 */
 		delete this._doRedraw;
 		delete this._doRender;
+		// delete this.valueAccessor;
+
+		/**
+		 * Const
+		 */
+		this._cellHeight = 16;
+		this._minimumWidth = 200;
+
+		/**
+		 * Do not allow to change height
+		 */
+		delete this.height;
+		this._height = 120 + this.margins().top + this._cellHeight;
 	}
 
 	/**
@@ -23,17 +36,28 @@ class tx {
 	}
 
 	_doRender(){
-		let width = 848,
-			height = 120,
-			cellSize = 16; // cell size
+		let width = this.width();
+		/**
+		 * Check width requirement
+		 */
+		if(width < this._minimumWidth){
+			console.warn('Width not large enough. Minimum: ', this._minimumWidth);
+			width = this._minimumWidth;
+		}
+		/**
+		 * Calculate width
+		 */
+		let cellWidth = Math.floor((width - this.margins().left - this._cellHeight * 3) / 53);
 
-		let day = d3.time.format('%w'),
+		let height = this.height();
+
+		const day = d3.time.format('%w'),
 			week = d3.time.format('%U'),
 			percent = d3.format('.1%'),
 			format = d3.time.format('%Y-%m-%d'),
 			fullMonth = d3.time.format('%b');
 
-		let weekDay = {
+		const weekDay = {
 			'M': 2,
 			'W': 4,
 			'F': 6
@@ -54,89 +78,82 @@ class tx {
 		  .selectAll('svg')
 		  .remove();
 
-		let xSVG =
-			d3.select('#' + this.anchorName())
-			  .selectAll('svg')
-			  .data(_chart.range)
-			  .enter()
-			  .append('svg')
-			  .style('padding', '3px');
-		let svg =
-			xSVG
-				.attr('width', width + this.margins().left + (cellSize * 3))
-				.attr('height', height + this.margins().top + cellSize)
-				.append('g')
-				.attr('transform', 'translate(' + this.margins().left + ',' + this.margins().top + ')');
+		let coreLayoutSvg = d3.select('#' + this.anchorName())
+		                      .selectAll('svg')
+		                      .data(this.range)
+		                      .enter()
+		                      .append('svg')
+		                      .style('padding', '3px');
 
-		svg.append('text')
-		   .attr('transform', 'translate(-16,' + cellSize * 3.5 + ')rotate(-90)')
-		   .style('text-anchor', 'middle')
-		   .text(function(d){
-			   return d;
-		   });
+		let titleSvg = coreLayoutSvg.attr('width', width + this.margins().left + (this._cellHeight * 3))
+		                            .attr('height', this._height)
+		                            .append('g')
+		                            .attr('transform',
+			                            'translate(' + this.margins().left + ',' + this.margins().top + ')')
+		                            .append('text')
+		                            .attr('transform', 'translate(-16,' + this._cellHeight * 3.5 + ')rotate(-90)')
+		                            .style('text-anchor', 'middle')
+		                            .text(function(d){
+			                            return d;
+		                            });
 
 
-		if(xSVG.renderTitle()){
-			let dowLabel =
-				svg.selectAll('.dowLabel')
-				   .data(function(d){
-					   return ['M', 'W', 'F'];
-				   })
-				   .enter().append('text')
-				   .attr('transform', function(d){
-
-					   return 'translate(-15,' + parseInt((cellSize * weekDay[d]) - 3) + ')';
-				   })
-				   .text(function(d){
-					   return d;
-				   })
-				   .attr('style', 'font-weight : bold');
+		if(this.renderTitle()){
+			let dowLabel = titleSvg.selectAll('.dowLabel')
+			                       .data(function(d){
+				                       return ['M', 'W', 'F'];
+			                       })
+			                       .enter().append('text')
+			                       .attr('transform', function(d){
+				                       return 'translate(-15,' + parseInt((this._cellHeight * weekDay[d]) - 3) + ')';
+			                       })
+			                       .text(function(d){
+				                       return d;
+			                       })
+			                       .attr('style', 'font-weight : bold');
 		}
 
-		let rect =
-				svg.selectAll('.day')
-				   .data(function(d){
-					   return d3.time.days(new Date(d, 0, 1), new Date(d + 1, 0, 1));
-				   })
-				   .enter()
-				   .append('rect')
-				   .attr('class', 'day')
-				   .attr('width', cellSize)
-				   .attr('height', 16)
-				   .attr('x', function(d){
-					   return week(d) * cellSize;
-				   })
-				   .attr('y', function(d){
-					   return day(d) * cellSize;
-				   })
-				   .style('fill', d =>{
-					   return 'white';
-				   })
+		let rect = coreLayoutSvg.selectAll('.day')
+		                        .data(function(d){
+			                        return d3.time.days(new Date(d, 0, 1), new Date(d + 1, 0, 1));
+		                        })
+		                        .enter()
+		                        .append('rect')
+		                        .attr('class', 'day')
+		                        .attr('width', cellWidth)
+		                        .attr('height', this._cellHeight)
+		                        .attr('x', function(d){
+			                        return week(d) * cellWidth;
+		                        })
+		                        .attr('y', function(d){
+			                        return day(d) * cellWidth;
+		                        })
+		                        .style('fill', d =>{
+			                        return 'white';
+		                        })
 			;
-		window.rect = rect;
 
-		if(xSVG.renderTitle()){
-			rect
-				.append('title')
-				.text(function(d){
-					return d;
-				});
+		if(this.renderTitle()){
+			rect.append('title')
+			    .text(function(d){
+				    return d;
+			    });
 		}
 
 		let monthLabel =
-			svg.selectAll('.monthLabel')
-			   .data(function(d){
-				   return d3.time.months(new Date(d, 0, 1), new Date(d + 1, 0, 1));
-			   })
-			   .enter().append('text')
-			   .text(function(d){
-				   return fullMonth(d);
-			   })
-			   .attr('x', function(d){
-				   return week(d) * cellSize /*+ cellSize*/;
-			   })
-			   .attr('y', -3)
-			   .attr('class', 'monthLabel');
+			titleSvg.selectAll('.monthLabel')
+			        .data(function(d){
+				        return d3.time.months(new Date(d, 0, 1), new Date(d + 1, 0, 1));
+			        })
+			        .enter().append('text')
+			        .text(function(d){
+				        return fullMonth(d);
+			        })
+			        .attr('x', function(d){
+				        return week(d) * cellWidth /*+ cellSize*/;
+			        })
+			        .attr('y', -3)
+			        .attr('class', 'monthLabel');
 
 		let data =
 			d3.nest()
@@ -146,7 +163,7 @@ class tx {
 			  .rollup(function(d){
 				  return this.valueAccessor()(d);
 			  })
-			  .map(xSVG.data());
+			  .map(this.data());
 
 		let valArr = this.group().all().map(c =>{
 			return c.value
@@ -200,7 +217,7 @@ class tx {
 		    })
 		    .on('click', onClick);
 
-		if(xSVG.renderTitle()){
+		if(coreLayoutSvg.renderTitle()){
 			rect.filter(function(d){
 				let date = simpleDate(d);
 				return data[date];
@@ -220,18 +237,39 @@ class tx {
 
 	}
 
+	height(height){
+		if(!height){
+			return this._height;
+		}
+
+		console.warn('Do no allow change height. Height set at: ', this._height);
+		return this;
+	}
+
+	_checkRequirement(){
+		if(!this.range)
+			console.error('No range years set up');
+	}
+
 	xxx(w){
 		let cellSize = Math.floor(w / 53);
 		rect.attr('width', cellSize);
 		rect.attr('x', function(d){
 			return week(d) * cellSize;
 		});
-		xSVG.attr('width', w);
+		coreLayoutSvg.attr('width', w);
 		monthLabel.attr('x', function(d){
 			return week(d) * cellSize;
 		});
 		// window.xSVG = xSVG;
-	};
+	}
+
+	rangeYears(range){
+		this.range = d3.range(range[0], range[1]);
+		return this;
+	}
+
+
 }
 
 
