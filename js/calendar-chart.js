@@ -18,7 +18,7 @@ class tx {
 		 * Const
 		 */
 		this._cellHeight = 16;
-		this._minimumWidth = 200;
+		this._minimumWidth = 500;
 
 		/**
 		 * Do not allow to change height
@@ -31,8 +31,25 @@ class tx {
 	 * Override
 	 */
 	_doRedraw(){
+
 		this._doRender();
 		return this;
+	}
+
+	reDrawAttr(){
+
+	}
+
+	reDrawWidth(width){
+		let cellSize = this._computeCellWidth(width);
+		rect.attr('width', cellSize);
+		rect.attr('x', d =>{
+			return week(d) * cellSize;
+		});
+		this.xSVG.attr('width', width);
+		this.monthLabel.attr('x', d =>{
+			return week(d) * cellSize;
+		});
 	}
 
 	_doRender(){
@@ -47,8 +64,7 @@ class tx {
 		/**
 		 * Calculate width
 		 */
-		let cellWidth = Math.floor((width - this.margins().left - this._cellHeight * 3) / 53);
-
+		this._cellWidth = this._computeCellWidth(width);
 		let height = this.height();
 
 		const day = d3.time.format('%w'),
@@ -74,22 +90,27 @@ class tx {
 		/**
 		 * Clear before re-render
 		 */
-		let xSVG =
+		this.xSVG =
 			d3.select('#' + this.anchorName())
 			  .selectAll('svg')
 			  .data(this.range)
 			  .enter()
 			  .append('svg')
 			  .style('padding', '3px');
+		/**
+		 * Draw title
+		 */
+		let _chart = this;
+
 		let svg =
-			xSVG
-				.attr('width', width)
-				.attr('height', this._height)
-				.append('g')
-				.attr('transform', 'translate(' + this.margins().left + ',' + this.margins().top + ')');
+			this.xSVG
+			    .attr('width', width)
+			    .attr('height', _chart._height)
+			    .append('g')
+			    .attr('transform', 'translate(' + _chart.margins().left + ',' + _chart.margins().top + ')');
 
 		svg.append('text')
-		   .attr('transform', 'translate(-16,' + this._cellHeight * 3.5 + ')rotate(-90)')
+		   .attr('transform', 'translate(-16,' + _chart._cellHeight * 3.5 + ')rotate(-90)')
 		   .style('text-anchor', 'middle')
 		   .text(function(d){
 			   return d;
@@ -104,8 +125,7 @@ class tx {
 				   })
 				   .enter().append('text')
 				   .attr('transform', function(d){
-
-					   return 'translate(-15,' + parseInt((cellWidth * weekDay[d]) - 3) + ')';
+					   return 'translate(-15,' + parseInt((_chart._cellWidth * weekDay[d]) - 3) + ')';
 				   })
 				   .text(function(d){
 					   return d;
@@ -113,36 +133,36 @@ class tx {
 				   .attr('style', 'font-weight : bold');
 		}
 
-		let rect =
-				svg.selectAll('.day')
-				   .data(function(d){
-					   return d3.time.days(new Date(d, 0, 1), new Date(d + 1, 0, 1));
-				   })
-				   .enter()
-				   .append('rect')
-				   .attr('class', 'day')
-				   .attr('width', cellWidth)
-				   .attr('height', this._cellHeight)
-				   .attr('x', function(d){
-					   return week(d) * cellWidth;
-				   })
-				   .attr('y', function(d){
-					   return day(d) * cellWidth;
-				   })
-				   .style('fill', d =>{
-					   return 'white';
-				   })
-			;
+		this.rect =
+			svg.selectAll('.day')
+			   .data(function(d){
+				   return d3.time.days(new Date(d, 0, 1), new Date(d + 1, 0, 1));
+			   })
+			   .enter()
+			   .append('rect')
+			   .attr('class', 'day')
+			   .attr('width', this._cellWidth)
+			   .attr('height', this._cellHeight)
+			   .attr('x', function(d){
+				   return week(d) * _chart._cellWidth;
+			   })
+			   .attr('y', function(d){
+				   return day(d) * _chart._cellWidth;
+			   })
+			   .style('fill', d =>{
+				   return 'white';
+			   })
+		;
 
 		if(this.renderTitle()){
-			rect
-				.append('title')
-				.text(function(d){
-					return d;
-				});
+			this.rect
+			    .append('title')
+			    .text(function(d){
+				    return d;
+			    });
 		}
 
-		let monthLabel =
+		this.monthLabel =
 			svg.selectAll('.monthLabel')
 			   .data(function(d){
 				   return d3.time.months(new Date(d, 0, 1), new Date(d + 1, 0, 1));
@@ -152,12 +172,11 @@ class tx {
 				   return fullMonth(d);
 			   })
 			   .attr('x', function(d){
-				   return week(d) * cellWidth /*+ cellSize*/;
+				   return week(d) * _chart._cellWidth /*+ cellSize*/;
 			   })
 			   .attr('y', -3)
 			   .attr('class', 'monthLabel');
 
-		let chart = this;
 
 		let data =
 			d3.nest()
@@ -165,9 +184,9 @@ class tx {
 				  return d.key;
 			  })
 			  .rollup(function(d){
-				  return chart.valueAccessor()(d);
+				  return _chart.valueAccessor()(d);
 			  })
-			  .map(chart.data());
+			  .map(_chart.data());
 
 		let valArr = this.group().all().map(c =>{
 			return c.value
@@ -186,30 +205,20 @@ class tx {
 
 		let domainRange = [emptyVal, bottom10Val, range10Val, range40Val, top50Val, top100Val];
 
-		// if (!color) {
-		//     color = d3.scale.quantile()
-		//         .domain(domainRange)
-		//         .range(colors);
-		// }
-
 		const heatColorMapping = function(d){
-
 			return d3.scale.linear()
 			         .domain(domainRange)
 			         .range([emptyColor, bottom10Color, range10Color, range40Color, top50Color, top100Color])(d);
 		};
 
-		// heatColorMapping.domain = function(){
-		//     return [0,1];
-		// };
-
 		/**
 		 * Only apply on who has data
 		 */
-		rect.filter(function(d){
-			let date = simpleDate(d);
-			return data[date];
-		})
+		this.rect
+		    .filter(d =>{
+			    let date = simpleDate(d);
+			    return data[date];
+		    })
 		    .style('fill', function(d){
 			    let date = simpleDate(d);
 			    let val = data[date];
@@ -222,10 +231,11 @@ class tx {
 		    .on('click', onClick);
 
 		if(this.renderTitle()){
-			rect.filter(function(d){
-				let date = simpleDate(d);
-				return data[date];
-			})
+			this.rect
+			    .filter(d =>{
+				    let date = simpleDate(d);
+				    return data[date];
+			    })
 			    .select('title')
 			    .text(function(d){
 				    let date = simpleDate(d);
@@ -257,12 +267,8 @@ class tx {
 		function simpleDate(date){
 			return date.getFullYear() + '-' + prefixZero(date.getMonth() + 1) + '-' + prefixZero(date.getDate());
 		}
-		// _chart.width = function(){
-		// 	console.log('hello width function');
-		// };
 
 		return this;
-
 	}
 
 	height(height){
@@ -284,7 +290,9 @@ class tx {
 		return this;
 	}
 
-
+	_computeCellWidth(width){
+		return Math.floor((width - this.margins().left - this._cellHeight * 3) / 53);
+	}
 }
 
 
