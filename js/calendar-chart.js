@@ -42,8 +42,9 @@ class tx {
 
 	reDrawWidth(width){
 		let cellSize = this._computeCellWidth(width);
-		rect.attr('width', cellSize);
-		rect.attr('x', d =>{
+		this.rect.attr('width', cellSize);
+		const week = d3.time.format('%U');
+		this.rect.attr('x', d =>{
 			return week(d) * cellSize;
 		});
 		this.xSVG.attr('width', width);

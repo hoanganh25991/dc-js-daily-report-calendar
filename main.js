@@ -112,6 +112,6 @@ fetch('data1.json')
          })
          .rangeYears([2016, 2018]);
 		x.render();
-		
+		window.x = x;
 	})
 ;
