@@ -13,18 +13,22 @@ class TiCalendarChart {
 			return d.chartDayFormat;
 		});	
 		
-		this.render();
+		//override for custom
+		console.log('%c override to custom', 'color: blue; font-weight: bold');
+		console.log('_onClick', '_chartGroupBy', '_chart._computeColorRange');
 	}
 
-	// computeCO
-	
 	render(attr = 'total'){
+		this.renderAttr = attr;
+
 		let chart = this._buildChart();
-		let chartDayDim = this.chartDayDim;		
+		let chartDayDim = this.chartDayDim;
+
+		let renderAttr = this.renderAttr;
 		if(typeof this._chartGroupBy == 'undefined'){
-			let chartGroupBy = function (attr){
+			let chartGroupBy = function (renderAttr){
 				return chartDayDim.group().reduceSum(function(d){
-					return d[attr];
+					return d[renderAttr];
 				});
 			}
 
@@ -33,20 +37,15 @@ class TiCalendarChart {
 
 		let chartGroupBy = this._chartGroupBy;
 
-		console.log(chartGroupBy('total'));
+		// console.log(chartGroupBy('total'));
 
 		chart
-			.width(700)
-			.height(130)
 			.dimension(chartDayDim)
 			.group(chartGroupBy(attr))
 			.valueAccessor(function (p) {
 				return p[0].value;
 			});
 		;
-
-		// console.log(chart);
-		window.chart = chart;
 
 		chart.render();
 	}
@@ -92,9 +91,9 @@ class TiCalendarChart {
 				return 0;
 		});
 
-		//Make sure year range at least 2 value
-		let currentYear = this.yearRange[this.yearRange.length - 1];
-		this.yearRange.push(currentYear + 1);
+		//Push range one more than the max
+		let maxYear = this.yearRange[this.yearRange.length - 1];
+		this.yearRange.push(maxYear + 1);
 	}
 
 	_computeChartData(){
@@ -115,7 +114,7 @@ class TiCalendarChart {
 		this._chart = dc.marginMixin(dc.baseMixin({}));
 
 		let _chart = this._chart;
-		var width = 900,
+		var width = 800,
 			height = 120,
 			cellSize = 16; // cell size
 
@@ -154,10 +153,29 @@ class TiCalendarChart {
 		};
 
 		_chart._doRedraw = function(){
-			this._chart._doRender();
+			_chart._doRender();
 			_highlightFilters();
 			return _chart;
 		};
+
+
+		let rawData = this.rawData;
+
+		if(typeof this._onClick == 'undefined'){
+			let onClick = function (d){
+				var dateClicked = simpleDate(d);
+				_chart.group().all().forEach(function(datum){
+					if(datum.key === dateClicked){
+						console.log('click on day');
+						console.log(datum);
+					}
+				});
+			};
+
+			this._onClick = onClick;
+		}
+
+		let onClick = this._onClick;
 
 		_chart._doRender = function(){
 			d3.select("#" + _chart.anchorName())
@@ -171,7 +189,6 @@ class TiCalendarChart {
                 .style("padding", '3px')
                 .attr("width", width + _chart.margins().left + (cellSize * 3))
                 .attr("height", height + _chart.margins().top + cellSize)
-                //                .attr("class", "RdYlGn")
                 .append("g")
                 .attr("transform", "translate(" + _chart.margins().left + "," + _chart.margins().top + ")");
 
@@ -185,7 +202,7 @@ class TiCalendarChart {
 
             if (_chart.renderTitle()) {
                 var dowLabel = svg.selectAll('.dowLabel')
-                    .data(function (d) {
+                    .data(function () {
                         return ["M", "W", "F"];
                     })
                     .enter().append("text")
@@ -201,7 +218,6 @@ class TiCalendarChart {
 
             var rect = svg.selectAll(".day")
                 .data(function (d) {
-                    // return d3.time.days(new Date(d, 0, 1), new Date(d + 1, 0, 1));
                     return _chart.days[d];
                 })
                 .enter()
@@ -225,10 +241,10 @@ class TiCalendarChart {
 
             var monthLabel = svg.selectAll(".monthLabel")
                 .data(function (d) {
-                    // return d3.time.months(new Date(d, 0, 1), new Date(d + 1, 0, 1));
                     return _chart.months[d];
                 })
-                .enter().append("text")
+                .enter()
+                .append("text")
                 .text(function (d) {
                     return fullMonth(d);
                 })
@@ -322,110 +338,32 @@ class TiCalendarChart {
 			}
 
 			let styleFill = this._styleFill;
-			console.log(styleFill);
 
 			rect
 				.filter(function(d){
 					var date = simpleDate(d);
 					return date in data;
 				})
-			    // .style("fill", styleFill)
-			    .style("fill", function(d) {
-					var date = simpleDate(d);
-					var col = 0;
-					if (data[date] < -0 && data[date] >= -10) {
-						col = -1;
-					}
-					if (data[date] < -10 && data[date] >= -20) {
-						col = -2;
-					}
-					if (data[date] < -20 && data[date] >= -30) {
-						col = -3;
-					}
-					if (data[date] < -30 && data[date] >= -40) {
-						col = -4;
-					}
-					if (data[date] < -40 && data[date] >= -50) {
-						col = -5;
-					}
-					if (data[date] < -50 && data[date] >= -60) {
-						col = -6;
-					}
-					if (data[date] < -60 && data[date] >= -70) {
-						col = -7;
-					}
-					if (data[date] < -70 && data[date] >= -80) {
-						col = -8;
-					}
-					if (data[date] < -80 && data[date] >= -90) {
-						col = -9;
-					}
-					if (data[date] < -90) {
-						col = -10;
-					}
-					if (data[date] == 0) {
-						col = 0;
-					}
-					if (data[date] >= 0) {
-						col = 1;
-					}
-					if (data[date] >= 20) {
-						col = 2;
-					}
-					if (data[date] >= 40) {
-						col = 3;
-					}
-					if (data[date] >= 60) {
-						col = 4;
-					}
-					if (data[date] >= 80) {
-						col = 5;
-					}
-					if (data[date] >= 100) {
-						col = 6;
-					}
-					if (data[date] >= 120) {
-						col = 7;
-					}
-					if (data[date] >= 140) {
-						col = 8;
-					}
-					if (data[date] >= 160) {
-						col = 9;
-					}
-					if (data[date] >= 180) {
-						col = 10;
-					}
-					return computeColorRange(col);
-				})
+			    .style("fill", styleFill)
 			    .on('click', onClick);
 
 			if(_chart.renderTitle()){
-				rect.filter(function(d){
-					var date = simpleDate(d);
-					return date in data;
-				})
+				rect
+					.filter(function(d){
+						var date = simpleDate(d);
+						return date in data;
+					})
 				    .select("title")
 				    .text(function(d){
 					    var date = simpleDate(d);
-					    // console.log(data);
-					    // return date + ": " + data[date].toFixed(2) + " Daily Average";
 					    return data[date].toFixed(2);
 				    });
 			}
 
 			return _chart;
 		}
-		//help function
-		function onClick(d, i){
-			var dateClicked = simpleDate(d);
-			_chart.group().all().forEach(function(datum){
-				if(datum.key === dateClicked){
-					_chart.onClick(datum, i);
-				}
-			});
-		}
 
+		//helper function
 		function prefixZero(value){
 			var s = value + "";
 			if(s.length === 1){

@@ -3,6 +3,7 @@ fetch('data1.json')
 		return Promise.resolve(res.json());
 	})
 	.then(closures => {
+		window.closures = closures;
 		window.tiCalendarChart = new TiCalendarChart('testAnchor', closures);
 		tiCalendarChart.render();
 	});
