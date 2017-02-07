@@ -107,10 +107,10 @@ fetch('data1.json')
 			.width(948)
 			.dimension(dayDim)
 			.group(countAttr)
-         .valueAccessor(c =>{
-	         return c[0].value;
-         })
-         .rangeYears([2016, 2018]);
+	         .valueAccessor(c =>{
+		         return c[0].value;
+	         })
+	         .rangeYears([2016, 2018]);
 		x.render();
 		window.x = x;
 		window.dayDim = dayDim;

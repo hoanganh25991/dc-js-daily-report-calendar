@@ -142,6 +142,8 @@ class tx {
 		this.rect =
 			svg.selectAll('.day')
 			   .data(function(d){
+			   		console.log(d);
+			   		// console.log( d3.time.days(new Date(d, 0, 1), new Date(d + 1, 0, 1)));
 				   return d3.time.days(new Date(d, 0, 1), new Date(d + 1, 0, 1));
 			   })
 			   .enter()
